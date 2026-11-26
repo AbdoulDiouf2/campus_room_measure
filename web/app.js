@@ -585,6 +585,6 @@ for (const button of document.querySelectorAll(".nav-button")) {
   button.addEventListener("click", () => showView(button.dataset.view));
 }
 
-request("/api/version").then((data) => { $("version").textContent = `Version ${data.version}`; }).catch(() => { $("version").textContent = "Version indisponible"; });
+request("/api/version").then((data) => { const label = $("version"); label.textContent = `Version ${data.version.slice(0, 8)}`; label.title = `Version complète : ${data.version}`; label.setAttribute("aria-label", `Version complète : ${data.version}`); }).catch(() => { $("version").textContent = "Version indisponible"; });
 loadDatasets();
 loadRecent();
