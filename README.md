@@ -4,7 +4,7 @@ CampusData importe des fichiers CSV de capteurs (CO₂, température, humidité)
 
 ## État du projet
 
-Le code métier, le worker, les vues Dépôts, Rapport, Indicateurs et gestion des jeux, ainsi que les tests d’intégration de S2 sont présents. Les contrôles automatisés sur `campus_test` passent (`15 passed` au 26/11/2026). La page et l'API répondent via Nginx sur le serveur de développement. **Le parcours visuel au navigateur et au clavier a été contrôlé sur le serveur de développement ; voir `proofs/s2-api-tests.txt` et `proofs/s2-interface-vues.txt`.** Les déploiements Compose complet, Kubernetes, AWS, CI et restauration des séances S3–S6 n'ont pas encore été validés.
+Le code métier, le worker, les vues Dépôts, Rapport, Indicateurs et gestion des jeux, ainsi que les tests d’intégration de S2 sont présents. Les contrôles automatisés sur `campus_test` passent (`15 passed` au 26/11/2026). La page et l'API répondent via Nginx sur le serveur de développement. **Le parcours visuel au navigateur et au clavier a été contrôlé sur le serveur de développement ; voir `proofs/s2-api-tests.txt` et `proofs/s2-interface-vues.txt`.** La pile Compose complète et la persistance S3 sont validées sur le serveur ; Kubernetes, AWS, CI et restauration S4–S6 restent à exécuter.
 
 Le kit de départ a fourni les Dockerfiles, Compose, manifestes Kubernetes, trames documentaires et trois CSV. Les modules métier de `api/app/`, l'interface et les tests S2 ont été ajoutés pendant le projet.
 
@@ -52,6 +52,26 @@ curl http://127.0.0.1:8080/api/version
 La page est disponible sur `http://127.0.0.1:8080/` depuis le serveur. Le relais Tailscale configuré sur ce serveur donne aussi `https://maadec-infra-01.tailebc8ae.ts.net:8444/` aux membres autorisés du tailnet.
 
 Le service `campusdata-worker.service` traite les dépôts en continu. La commande `python -m app.worker --once`, exécutée depuis `api/` avec `DATABASE_URL` configuré, vide la file courante puis se termine pour le CronJob Kubernetes. Un dépôt déjà `running` lors d'un arrêt brutal n'est pas repris automatiquement dans cette version.
+
+## Pile Compose complète S3
+
+Sur le serveur, la pile S3 utilise `compose.yaml` et un volume PostgreSQL distinct de `compose.dev.yaml`. Le `.env` local doit fournir `DATABASE_URL` avec l’hôte **`db:5432`** ; les scripts systemd S2 adaptent eux-mêmes leur connexion à la base de développement. Les services S2 doivent être arrêtés avant S3 car les deux webs utilisent le port 8080. Depuis la racine :
+
+```bash
+systemctl --user stop campusdata-api.service campusdata-worker.service
+docker compose -f compose.dev.yaml down  # sans -v
+set -a; source .env; set +a
+export APP_VERSION="$(git rev-parse HEAD)"
+docker compose -f compose.yaml build api web
+docker compose -f compose.yaml up -d --wait db
+docker compose -f compose.yaml run --rm --no-deps api python -m app.init_db
+docker compose -f compose.yaml up -d api worker web
+docker compose -f compose.yaml ps
+curl -fsS http://127.0.0.1:8080/health/ready
+curl -fsS http://127.0.0.1:8080/api/version
+```
+
+La pile S3 a été vérifiée le 26/11/2026 avec les quatre services actifs et la version `4b24b67`. Le jeu témoin `S3-temoin-2026-11-27` et ses 63 mesures ont été retrouvés après `docker compose down` **sans `-v`** puis recréation. Les observations figurent dans `proofs/s3-*.txt`. Ne pas supprimer le volume `campusdata_pgdata` pendant la preuve. Dans un nouveau terminal, recharger `.env` et renseigner de nouveau les UUID shell avant les commandes de relecture.
 
 ## Vérifications S2
 

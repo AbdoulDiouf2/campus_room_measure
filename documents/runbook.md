@@ -52,6 +52,10 @@ que si les quatre contrôles de la dernière ligne sont observés.
 | Heure d’application et opérateur | À relever | À relever |
 | Rollout API/web, `/api/version`, parcours métier, jeu témoin | Observé / non observé | Observé / non observé |
 
+### Déploiement local S3 vérifié le 26/11/2026
+
+Lieu : serveur `maadec-infra-01`, racine du dépôt. Charger `.env` dans **chaque nouveau terminal** et vérifier sans afficher le secret que l’hôte de `DATABASE_URL` est `db`. Arrêter les services systemd et la pile `compose.dev.yaml` pour libérer 8080, sans `down -v`. Construire API/web avec `APP_VERSION=$(git rev-parse HEAD)` ; démarrer DB avec `up -d --wait db`, lancer `run --rm --no-deps api python -m app.init_db`, puis `up -d api worker web`. Vérifier `docker compose -f compose.yaml ps`, `/health/ready`, `/api/version`, dépôt traité et jeu témoin. Le volume durable S3 observé est `campusdata_pgdata`, distinct du volume de développement. Une recréation avec `down` **sans `-v`** a conservé le jeu `bedb6cda-1110-4d52-ad5c-876a99f244a9` et ses 63 mesures. La preuve détaillée est `proofs/s3-persistance.txt`.
+
 ## 4. Diagnostiquer un incident
 
 Suivre : symptôme - hypothèse - commande - observation - correction - contrôle.
@@ -77,6 +81,12 @@ ou suppression de stockage avant d’avoir compris l’état des données.
 | Contrôle de reprise | Readiness, version API/web, lecture du jeu témoin |
 | Condition d’arrêt | Ce qui aurait imposé d’arrêter (mauvais cluster, risque sur les données) |
 | Suite à donner | Amélioration du runbook, test ou alerte à ajouter |
+
+### Incident local S3 observé le 26/11/2026
+
+Symptôme initial : `init_db` dans le conteneur API refusait la connexion à `127.0.0.1:5432`, malgré une DB healthy. Cause : `DATABASE_URL` du `.env` pointait vers la loopback du poste ; dans un conteneur, cette adresse pointe sur le conteneur lui-même. Correction : mettre l’hôte `db` dans le `.env`, **recharger `.env` dans le terminal**, relancer `init_db` ; contrôle : API healthy et `/health/ready` 200. La première relecture de persistance n’affichait rien car la variable `S3_DATASET_ID` était vide dans un nouveau terminal ; reprendre l’UUID conservé dans `proofs/s3-worker.txt` et exiger un `GET` 200 avec le même compteur avant de conclure.
+
+Panne volontaire : `docker compose -f compose.yaml stop db` a laissé `/health/live` à 200 mais `/health/ready` et `/api/datasets` sont passés à 503. Après `start db`, readiness 200 et 63 mesures relues sur le témoin. Voir `proofs/s3-panne-db.txt`. Retour à l’état normal : quatre services actifs, DB/API healthy, même UUID de jeu et même nombre de mesures ; ne jamais supprimer `campusdata_pgdata` pour corriger une panne.
 
 ## 5. Revenir à la version précédente
 

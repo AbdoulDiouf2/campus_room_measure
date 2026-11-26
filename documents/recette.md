@@ -1,7 +1,7 @@
 # Rapport de recette
 
 **Étudiant :** Abdoul Ahad Mbacké DIOUF. **Dernier contrôle S2 :** 26/11/2026. **Relecture du code S2 :** parcours et vues contrôlés ; relecture finale à confirmer par l’étudiant.
-**Commit applicatif :** socle S2 `65d92c4` ; extension des vues et suppression de dépôt dans le commit suivant. **Digests API/web :** non construits à ce stade.
+**Commit applicatif :** S2 `65d92c4` et `4b24b67`. **Images API/web :** construites localement pour S3 ; digests non encore relevés.
 **Contexte de déploiement et commit de configuration :** à renseigner.
 
 ## 1. Conditions d’exécution
@@ -16,7 +16,7 @@ Les contrôles S2 ont été exécutés sur le serveur personnel, avec Python 3.1
 | US03 | Jeu avec dépôts et mesures | Test de suppression | 204 sans corps ; cascade | 204, puis 0 dépôt et 0 mesure liés | `proofs/s2-api-tests.txt` | Validé au niveau API et de la confirmation UI |
 | US04–US07 | Trois CSV fournis | Dépôt HTTP puis worker | 202/pending, résultats 63/0/0, 4/7/1, échec en-tête, redépôt 0/0/63 | Comptages et statuts confirmés par 15 tests réussis | `proofs/s2-api-tests.txt` | Validé au niveau API/worker |
 | US08–US09 | Jeu avec mesures et dépôt failed | Statistiques, filtres et relance | Indicateurs et transitions conformes | Somme 63, période inversée 422, relance failed 202, succeeded 409 | `proofs/s2-api-tests.txt` | Validé au niveau API et de l’UI de démonstration |
-| US10 | Volume durable | Redémarrage et relecture | Données conservées | Non exécuté en S2 | À produire en S3 | Non exécuté |
+| US10 | Pile Compose S3, jeu témoin 63 mesures | `down` sans `-v`, recréation, relecture par UUID | Même jeu et 63 mesures | UUID du jeu et du dépôt inchangés ; 63 mesures relues | `proofs/s3-persistance.txt` | Validé en S3 sur ce serveur |
 
 Résultats autorisés : validé, échoué, **non exécuté**, **non applicable avec justification**.
 Ne jamais remplacer une observation par le **résultat attendu**. Si une commande
@@ -88,3 +88,7 @@ Ces observations concernent S2 sur le serveur personnel. Elles ne valident ni la
 La maquette PDF a été comparée au rendu. Les vues Dépôts, Rapport, Indicateurs et gestion des jeux sont navigables. Le dépôt direct crée un jeu puis enregistre le CSV ; l’historique global permet de rouvrir le rapport après actualisation. La suppression d’un dépôt `succeeded` ou `failed` retire ses mesures et conserve le jeu ; un dépôt `pending` renvoie 409. La vérification sur `campus_test` donne 15 tests réussis. Les parcours Chromium ont contrôlé dépôt direct, traitement 63 mesures, rapport, indicateurs, historique après rechargement, annulation puis confirmation de suppression et affichage mobile à 390 px, sans erreur JavaScript. Voir `proofs/s2-interface-vues.txt`.
 
 Écart restant : les erreurs de ligne exposées par l’API comprennent `line` et `reason`, pas `room`, `field` ni `value`. Le tableau d’erreurs de la maquette est donc simplifié.
+
+## Contrôles Compose S3 — 26/11/2026
+
+Quatre services actifs : DB et API healthy, worker et web Up. Les processus API et worker exécutent avec UID 10001. `/health/live`, `/health/ready`, `/api/version`, `/api/datasets`, `/app.js` et `/styles.css` ont répondu 200 via Nginx. Un dépôt CSV du témoin a produit 63 mesures ; après `down` sans `-v` puis recréation, les mêmes UUID et 63 mesures ont été relus. Pendant `stop db`, live est resté 200, ready et la liste ont répondu 503 ; après `start db`, ready a retrouvé 200 et le témoin 63 mesures. Voir `proofs/s3-stack.txt`, `proofs/s3-worker.txt`, `proofs/s3-persistance.txt` et `proofs/s3-panne-db.txt`.
