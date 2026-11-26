@@ -4,7 +4,7 @@ CampusData importe des fichiers CSV de capteurs (CO₂, température, humidité)
 
 ## État du projet
 
-Le code métier, le worker, l'interface et les tests d'intégration de S2 sont présents. Les contrôles automatisés sur `campus_test` passent (`14 passed` au 26/11/2026). La page et l'API répondent via Nginx sur le serveur de développement. **Le parcours visuel au navigateur et au clavier a été contrôlé sur le serveur de développement ; voir `proofs/s2-api-tests.txt`.** Les déploiements Compose complet, Kubernetes, AWS, CI et restauration des séances S3–S6 n'ont pas encore été validés.
+Le code métier, le worker, les vues Dépôts, Rapport, Indicateurs et gestion des jeux, ainsi que les tests d’intégration de S2 sont présents. Les contrôles automatisés sur `campus_test` passent (`15 passed` au 26/11/2026). La page et l'API répondent via Nginx sur le serveur de développement. **Le parcours visuel au navigateur et au clavier a été contrôlé sur le serveur de développement ; voir `proofs/s2-api-tests.txt` et `proofs/s2-interface-vues.txt`.** Les déploiements Compose complet, Kubernetes, AWS, CI et restauration des séances S3–S6 n'ont pas encore été validés.
 
 Le kit de départ a fourni les Dockerfiles, Compose, manifestes Kubernetes, trames documentaires et trois CSV. Les modules métier de `api/app/`, l'interface et les tests S2 ont été ajoutés pendant le projet.
 
@@ -80,8 +80,11 @@ Les trois CSV de `data/` servent à la recette : fichier valide → 63 acceptée
 | DELETE | `/api/datasets/{id}` | Supprime jeu et données liées (`204` sans corps) |
 | POST | `/api/datasets/{id}/ingestions?filename=...` | CSV brut `text/csv`, 1 Mio max ; dépôt `pending` (`202`) |
 | GET | `/api/datasets/{id}/ingestions`, `/api/ingestions/{id}` | Liste et rapport des dépôts |
+| DELETE | `/api/ingestions/{id}` | Supprime un dépôt terminé ou en échec et ses mesures (`204`) ; dépôt actif `409` |
 | POST | `/api/ingestions/{id}/retry` | Relance un dépôt `failed` (`202`) ; autre statut `409` |
 | GET | `/api/datasets/{id}/stats?room=&from=&to=` | Indicateurs par salle et période |
+
+L’interface ouvre directement sur la vue Dépôts et conserve une vue de gestion des jeux. Le rapport affiche les compteurs, l’état et les erreurs ; les indicateurs montrent les salles et un tableau comparatif. Les repères CO₂ des cartes suivent la maquette. Le contrat API ne fournit pour chaque rejet que son numéro de ligne et sa raison : le tableau détaillé « salle/champ/valeur » de la maquette reste une limite explicite.
 
 Un dépôt à en-tête correct peut finir `succeeded` avec des lignes rejetées. Une erreur d'en-tête ou d'encodage rend le dépôt `failed`. La clé unique `(dataset_id, room, measured_at)` empêche les mesures en doublon entre dépôts.
 

@@ -8,61 +8,114 @@
   <script src="app.js" defer></script>
 </head>
 <body>
-  <main>
-    <header class="page-header">
-      <div><p class="eyebrow">Qualité de l'air du campus</p><h1>CampusData</h1><p>Importez les relevés des capteurs et consultez les mesures par salle.</p></div>
-      <span id="version" class="version">Version …</span>
-    </header>
+  <a class="skip-link" href="#content">Aller au contenu</a>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">≈</span><span>CampusData<small>Qualité de l'air du campus</small></span></div>
+      <nav class="main-nav" aria-label="Navigation principale">
+        <button type="button" class="nav-button" data-view="datasets">Jeux de données</button>
+        <button type="button" class="nav-button" data-view="deposits" aria-current="page">Dépôts</button>
+        <button type="button" class="nav-button" data-view="report" disabled>Rapport</button>
+        <button type="button" class="nav-button" data-view="stats">Indicateurs</button>
+      </nav>
+      <span class="prototype-label">Prototype · sans authentification</span><span id="version" class="version">Version …</span>
+    </div>
+  </header>
+  <main id="content">
     <p id="message" role="status" aria-live="polite"></p>
-
-    <section class="card" aria-labelledby="create-title">
-      <h2 id="create-title">Nouveau jeu de données</h2>
-      <form id="create-form">
-        <div class="fields">
-          <label>Nom <span aria-hidden="true">*</span><input id="dataset-name" name="name" required maxlength="120"></label>
-          <label>Responsable <input id="dataset-owner" name="owner"></label>
+    <div id="view-datasets" class="view" hidden>
+      <header class="view-heading"><p class="eyebrow">Vue d'ensemble</p><h1>Jeux de données</h1><p>Créez un jeu, puis ouvrez-le pour déposer les relevés des capteurs.</p></header>
+      <div class="overview-grid">
+        <section class="card" aria-labelledby="create-title">
+          <h2 id="create-title">Nouveau jeu de données</h2>
+          <form id="create-form">
+            <label for="dataset-name">Nom <span aria-hidden="true">*</span><input id="dataset-name" name="name" required maxlength="120"></label>
+            <label for="dataset-owner">Responsable <input id="dataset-owner" name="owner"></label>
+            <label for="dataset-description">Description <textarea id="dataset-description" name="description" rows="3"></textarea></label>
+            <button type="submit">Créer le jeu</button>
+          </form>
+        </section>
+        <section class="card" aria-labelledby="datasets-title">
+          <div class="section-heading"><h2 id="datasets-title">Jeux disponibles</h2><button type="button" id="refresh-datasets" class="secondary">Actualiser</button></div>
+          <p id="datasets-state" class="state">Chargement…</p>
+          <ul id="datasets" class="dataset-list"></ul>
+        </section>
+      </div>
+      <section id="detail" class="card" aria-labelledby="detail-title" hidden>
+        <div class="section-heading"><div><p class="eyebrow">Jeu sélectionné</p><h2 id="detail-title"></h2><p id="detail-meta"></p></div><button type="button" id="delete-dataset" class="danger">Supprimer le jeu</button></div>
+        <div class="split-content">
+          <section aria-labelledby="upload-title">
+            <h3 id="upload-title">Nouveau dépôt</h3>
+            <p>En-tête attendu :</p><p><code>room,measured_at,co2_ppm,temperature_c,humidity_pct</code></p>
+            <form id="upload-form">
+              <label for="csv-file">Fichier CSV <input id="csv-file" type="file" accept=".csv,text/csv" required></label>
+              <button id="upload-button" type="submit">Déposer le fichier</button>
+            </form>
+          </section>
+          <section aria-labelledby="ingestions-title">
+            <h3 id="ingestions-title">Derniers dépôts</h3>
+            <p id="ingestions-state" class="state"></p>
+            <div class="ingestion-head" aria-hidden="true"><span>Fichier</span><span>Déposé le</span><span>Statut</span><span>Résultat</span></div>
+            <ul id="ingestions" class="ingestion-list"></ul>
+          </section>
         </div>
-        <label>Description <textarea id="dataset-description" name="description" rows="2"></textarea></label>
-        <button type="submit">Créer le jeu</button>
-      </form>
-    </section>
-
-    <section class="card" aria-labelledby="datasets-title">
-      <div class="section-heading"><h2 id="datasets-title">Jeux de données</h2><button type="button" id="refresh-datasets" class="secondary">Actualiser</button></div>
-      <p id="datasets-state">Chargement…</p>
-      <ul id="datasets" class="dataset-list"></ul>
-    </section>
-
-    <section id="detail" class="card" aria-labelledby="detail-title" hidden>
-      <div class="section-heading"><div><p class="eyebrow">Jeu sélectionné</p><h2 id="detail-title"></h2><p id="detail-meta"></p></div><button type="button" id="delete-dataset" class="danger">Supprimer le jeu</button></div>
-      <h3>Déposer un fichier CSV</h3>
-      <p>En-tête attendu : <code>room,measured_at,co2_ppm,temperature_c,humidity_pct</code></p>
-      <form id="upload-form">
-        <label>Fichier CSV <input id="csv-file" type="file" accept=".csv,text/csv" required></label>
-        <button id="upload-button" type="submit">Déposer le fichier</button>
-      </form>
-      <h3>Dépôts</h3>
-      <p id="ingestions-state"></p>
-      <ul id="ingestions" class="ingestion-list"></ul>
-      <section id="report" aria-labelledby="report-title" hidden>
-        <h3 id="report-title">Rapport du dépôt</h3>
+        <div class="next-actions"><button type="button" id="deposits-to-stats" class="secondary">Voir les indicateurs</button></div>
+      </section>
+    </div>
+    <div id="view-deposits" class="view">
+      <header class="view-heading"><p class="eyebrow">Traitement des fichiers</p><h1>Dépôts de mesures</h1><p>Déposez le CSV des capteurs tel qu’il est exporté. Le worker le contrôle en arrière-plan ; le rapport distingue les lignes acceptées, rejetées et en doublon.</p></header>
+      <div class="overview-grid direct-grid">
+        <section class="card" aria-labelledby="direct-title">
+          <h2 id="direct-title">Nouveau dépôt</h2>
+          <form id="direct-upload-form">
+            <label for="direct-name">Nom du jeu de données <input id="direct-name" required maxlength="120" placeholder="ex. Relevés semaine 48"></label>
+            <p class="field-help">120 caractères max. Le nom est affiché tel quel.</p>
+            <label for="direct-file">Fichier CSV <input id="direct-file" type="file" accept=".csv,text/csv" required></label>
+            <p class="field-help">En-tête : <code>room,measured_at,co2_ppm,temperature_c,humidity_pct</code></p>
+            <label for="direct-owner">Responsable <input id="direct-owner" placeholder="ex. Service patrimoine"></label>
+            <button type="submit" id="direct-upload-button">Déposer le fichier</button>
+          </form>
+        </section>
+        <section class="card" aria-labelledby="recent-title">
+          <div class="section-heading"><h2 id="recent-title">Derniers dépôts</h2><button type="button" id="refresh-recent" class="secondary">Actualiser</button></div>
+          <p id="recent-state" class="state">Chargement…</p>
+          <div class="ingestion-head" aria-hidden="true"><span>Jeu / fichier</span><span>Responsable</span><span>Déposé le</span><span>Statut</span><span>Résultat</span></div>
+          <ul id="recent-ingestions" class="ingestion-list"></ul>
+        </section>
+      </div>
+    </div>
+    <div id="view-report" class="view" hidden>
+      <header class="view-heading"><p class="eyebrow">Suivi du traitement</p><h1>Rapport d'ingestion</h1><p>Retrouvez les lignes acceptées, rejetées et en doublon.</p></header>
+      <section id="report" class="card" aria-labelledby="report-title" hidden>
+        <div class="section-heading"><h2 id="report-title">Résultat du dépôt</h2><div class="report-actions"><button type="button" id="report-to-stats">Voir les indicateurs</button><button type="button" id="report-to-deposits" class="secondary">Retour aux dépôts</button></div></div>
         <div id="report-content"></div>
         <button type="button" id="retry-button" hidden>Relancer ce dépôt</button>
+        <button type="button" id="delete-ingestion" class="danger" hidden>Supprimer le dépôt</button>
       </section>
-      <h3>Indicateurs par salle</h3>
-      <form id="stats-form" class="fields filters">
-        <label>Salle <input id="filter-room" name="room"></label>
-        <label>Du <input id="filter-from" name="from" type="datetime-local"></label>
-        <label>Au <input id="filter-to" name="to" type="datetime-local"></label>
-        <button type="submit">Filtrer</button>
-      </form>
-      <p id="stats-state"></p>
-      <div class="table-scroll"><table id="stats-table" hidden>
-        <caption>Mesures acceptées par salle</caption>
-        <thead><tr><th scope="col">Salle</th><th scope="col">Mesures</th><th scope="col">CO₂ moy.</th><th scope="col">CO₂ min.</th><th scope="col">CO₂ max.</th><th scope="col">Temp. moy.</th><th scope="col">Humidité moy.</th><th scope="col">Dernière mesure</th></tr></thead>
-        <tbody id="stats-body"></tbody>
-      </table></div>
-    </section>
+      <p id="report-empty" class="card state">Sélectionnez un dépôt dans la vue « Dépôts » pour consulter son rapport.</p>
+    </div>
+    <div id="view-stats" class="view" hidden>
+      <header class="view-heading stats-heading"><div><p class="eyebrow">Analyse des mesures</p><h1>Indicateurs par salle</h1><p id="stats-dataset-name">Calculés sur les mesures acceptées uniquement.</p></div><label for="stats-dataset-select">Jeu de données <select id="stats-dataset-select"><option value="">Choisir un jeu</option></select></label></header>
+      <section class="card" aria-labelledby="stats-title">
+        <h2 id="stats-title">Filtres</h2>
+        <form id="stats-form" class="fields filters">
+          <label for="filter-room">Salle <input id="filter-room" name="room"></label>
+          <label for="filter-from">Du <input id="filter-from" name="from" type="datetime-local"></label>
+          <label for="filter-to">Au <input id="filter-to" name="to" type="datetime-local"></label>
+          <button type="submit">Filtrer</button>
+        </form>
+        <p id="stats-state" class="state">Choisissez un jeu pour afficher ses indicateurs.</p>
+        <div id="stats-summary" class="stats-summary" hidden></div>
+        <p class="air-legend">Repères visuels de la maquette : ≤ 800 ppm bon · 800 à 1 200 ppm à surveiller · &gt; 1 200 ppm aérer</p>
+        <div id="room-cards" class="room-cards"></div>
+        <h2 id="comparison-title" hidden>Tableau comparatif</h2>
+        <div class="table-scroll"><table id="stats-table" hidden>
+          <caption>Mesures acceptées par salle</caption>
+          <thead><tr><th scope="col">Salle</th><th scope="col">Mesures</th><th scope="col">CO₂ moy.</th><th scope="col">CO₂ min.</th><th scope="col">CO₂ max.</th><th scope="col">Temp. moy.</th><th scope="col">Humidité moy.</th><th scope="col">Dernière mesure</th></tr></thead>
+          <tbody id="stats-body"></tbody>
+        </table></div>
+      </section>
+    </div>
   </main>
 </body>
 </html>

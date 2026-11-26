@@ -1,0 +1,21 @@
+S2 — reprise de l'interface selon la maquette PDF
+Date : 26/11/2026
+Contexte : serveur personnel, pile compose.dev.yaml, API et worker systemd utilisateur.
+Version de départ : commit 65d92c4 ; extension non encore commitée au moment du contrôle.
+
+Observations :
+- Ruff API : All checks passed!
+- Pytest sur campus_test : 15 passed, 1 warning (StarletteDeprecationWarning de fastapi.testclient).
+- node --check web/app.js : succès.
+- Chromium via Nginx : dépôt direct d'un CSV valide, rapport terminé avec 63 lignes lues, 63 acceptées, 0 rejetée, 0 doublon ; indicateurs A101, A102, B201.
+- Après rechargement : l'historique global conserve le dépôt et ouvre son rapport.
+- Suppression du dépôt : annulation sans effet, confirmation avec HTTP 204, mesures du jeu retombées à 0, jeu conservé ; refus 409 pendant pending vérifié par test API.
+- Sélecteur Indicateurs : choix d’un jeu vide, état « aucune mesure », navigation et remise à zéro contrôlés. Un fichier non CSV est refusé avant la création du jeu.
+- Mobile 390 px : état vide et navigation visibles, sans débordement horizontal ; aucune erreur JavaScript dans les parcours.
+- Jeux temporaires S2-direct, S2-delete et S2-views supprimés après contrôle ; GET /api/datasets a répondu [].
+
+Captures : s2-interface-vues-depots.png, s2-interface-vues-rapport-termine.png,
+s2-interface-vues-rapport.png, s2-interface-vues-indicateurs.png,
+s2-interface-vues-mobile.png.
+
+Limite de fidélité : la maquette détaille les rejets par salle/champ/valeur ; le contrat API actuel ne fournit que le numéro de ligne et la raison. L'interface affiche ces deux informations sans inventer les autres.

@@ -240,7 +240,7 @@ Ne pas supprimer un volume PostgreSQL ou un PVC durant une preuve de persistance
 
 ## 10. État de la réalisation S2
 
-Les modules `database.py`, `models.py`, `schemas.py`, `init_db.py`, `ingestion.py`, `services.py`, `routes.py` et `worker.py` sont présents. L'API expose les routes métier, et `/health/ready` vérifie la présence des trois tables. Le worker fonctionne en boucle ou vide la file avec `--once`. L'interface permet création, suppression avec confirmation, dépôt CSV, suivi, relance, lecture des rejets et indicateurs filtrés.
+Les modules `database.py`, `models.py`, `schemas.py`, `init_db.py`, `ingestion.py`, `services.py`, `routes.py` et `worker.py` sont présents. L'API expose les routes métier, et `/health/ready` vérifie la présence des trois tables. Le worker fonctionne en boucle ou vide la file avec `--once`. L’interface permet création, suppression avec confirmation, dépôt CSV, suivi, relance, lecture des rejets et indicateurs filtrés. Une extension de S2 organise ces fonctions en vues Dépôts, Rapport, Indicateurs et gestion des jeux ; le dépôt direct et la suppression d’un dépôt terminé suivent la maquette. Les erreurs API ne contiennent que ligne et raison, donc les colonnes salle/champ/valeur de la maquette ne peuvent pas être affichées sans changer le contrat.
 
 La preuve `proofs/s2-api-tests.txt` consigne 14 tests réussis sur `campus_test`, les contrôles HTTP via Nginx et les parcours Chromium. Les captures `proofs/s2-interface-desktop.png`, `proofs/s2-interface-traitee.png`, `proofs/s2-interface-mobile.png` et `proofs/s2-interface-erreur.png` montrent les états observés. Les jeux créés pour les contrôles navigateur ont été supprimés après vérification.
 

@@ -13,6 +13,7 @@ from .services import (
     create_dataset,
     create_ingestion,
     delete_dataset,
+    delete_ingestion,
     get_dataset,
     get_ingestion,
     get_stats,
@@ -103,6 +104,13 @@ def get_ingestion_route(
     ingestion_id: UUID, session: Session = Depends(get_session)
 ) -> IngestionOut:
     return IngestionOut.model_validate(get_ingestion(session, ingestion_id))
+
+
+@router.delete("/ingestions/{ingestion_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_ingestion_route(
+    ingestion_id: UUID, session: Session = Depends(get_session)
+) -> None:
+    delete_ingestion(session, ingestion_id)
 
 
 @router.post(

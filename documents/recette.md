@@ -1,7 +1,7 @@
 # Rapport de recette
 
-**Étudiant :** Abdoul Ahad Mbacké DIOUF. **Dernier contrôle S2 :** 26/11/2026. **Relecture du code S2 :** à faire.
-**Commit applicatif :** modifications S2 locales non encore commitées (HEAD initial `bb04020`). **Digests API/web :** non construits à ce stade.
+**Étudiant :** Abdoul Ahad Mbacké DIOUF. **Dernier contrôle S2 :** 26/11/2026. **Relecture du code S2 :** parcours et vues contrôlés ; relecture finale à confirmer par l’étudiant.
+**Commit applicatif :** socle S2 `65d92c4` ; extension des vues et suppression de dépôt dans le commit suivant. **Digests API/web :** non construits à ce stade.
 **Contexte de déploiement et commit de configuration :** à renseigner.
 
 ## 1. Conditions d’exécution
@@ -14,7 +14,7 @@ Les contrôles S2 ont été exécutés sur le serveur personnel, avec Python 3.1
 |---|---|---|---|---|---|---|
 | US01–US02 | `campus_test`, tables créées | `python -m pytest -q` | Créer/lister/ouvrir ; 409/404 | Création et compteurs contrôlés ; refus observés dans les tests | `proofs/s2-api-tests.txt` et `api/tests/test_api_flow.py` | Validé au niveau API |
 | US03 | Jeu avec dépôts et mesures | Test de suppression | 204 sans corps ; cascade | 204, puis 0 dépôt et 0 mesure liés | `proofs/s2-api-tests.txt` | Validé au niveau API et de la confirmation UI |
-| US04–US07 | Trois CSV fournis | Dépôt HTTP puis worker | 202/pending, résultats 63/0/0, 4/7/1, échec en-tête, redépôt 0/0/63 | Comptages et statuts confirmés par 14 tests réussis | `proofs/s2-api-tests.txt` | Validé au niveau API/worker |
+| US04–US07 | Trois CSV fournis | Dépôt HTTP puis worker | 202/pending, résultats 63/0/0, 4/7/1, échec en-tête, redépôt 0/0/63 | Comptages et statuts confirmés par 15 tests réussis | `proofs/s2-api-tests.txt` | Validé au niveau API/worker |
 | US08–US09 | Jeu avec mesures et dépôt failed | Statistiques, filtres et relance | Indicateurs et transitions conformes | Somme 63, période inversée 422, relance failed 202, succeeded 409 | `proofs/s2-api-tests.txt` | Validé au niveau API et de l’UI de démonstration |
 | US10 | Volume durable | Redémarrage et relecture | Données conservées | Non exécuté en S2 | À produire en S3 | Non exécuté |
 
@@ -82,3 +82,9 @@ pour comprendre le scénario.
 Chromium a chargé l'interface depuis Nginx sur le serveur de développement. J'ai observé la création d'un jeu, un dépôt `pending`, puis un rapport de 63 acceptées après `worker --once` ; le compteur du jeu sélectionné et les trois salles ont été vérifiés. Le fichier mixte a affiché 4 acceptées, 7 raisons de rejet et 1 doublon. L'en-tête invalide a affiché l'échec et permis la relance. L'annulation de suppression n'a pas supprimé le jeu ; une suppression confirmée a laissé la liste vide. Le focus clavier, le message d'erreur réseau, l'affichage littéral d'un nom contenant `<b>` et l'absence de débordement horizontal à 390 px ont été observés. Les captures se trouvent dans `proofs/s2-interface-*.png` ; détails dans `proofs/s2-api-tests.txt`.
 
 Ces observations concernent S2 sur le serveur personnel. Elles ne valident ni la persistance après redémarrage, ni Compose complet, Kubernetes ou AWS.
+
+## Extension des vues S2 — 26/11/2026
+
+La maquette PDF a été comparée au rendu. Les vues Dépôts, Rapport, Indicateurs et gestion des jeux sont navigables. Le dépôt direct crée un jeu puis enregistre le CSV ; l’historique global permet de rouvrir le rapport après actualisation. La suppression d’un dépôt `succeeded` ou `failed` retire ses mesures et conserve le jeu ; un dépôt `pending` renvoie 409. La vérification sur `campus_test` donne 15 tests réussis. Les parcours Chromium ont contrôlé dépôt direct, traitement 63 mesures, rapport, indicateurs, historique après rechargement, annulation puis confirmation de suppression et affichage mobile à 390 px, sans erreur JavaScript. Voir `proofs/s2-interface-vues.txt`.
+
+Écart restant : les erreurs de ligne exposées par l’API comprennent `line` et `reason`, pas `room`, `field` ni `value`. Le tableau d’erreurs de la maquette est donc simplifié.

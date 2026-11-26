@@ -211,3 +211,20 @@ def test_worker_once_drains_queue_and_delete_cascades(dataset):
             )
             == 0
         )
+
+
+def test_delete_ingestion_after_processing(dataset):
+    created = upload(dataset, "mesures-salles-2026-10-05.csv")
+    assert created.status_code == 202
+    ingestion_id = created.json()["id"]
+    assert client.delete(f"/api/ingestions/{ingestion_id}").status_code == 409
+
+    process_one()
+    assert client.get(f"/api/datasets/{dataset}").json()["measurement_count"] == 63
+    deleted = client.delete(f"/api/ingestions/{ingestion_id}")
+    assert deleted.status_code == 204
+    assert deleted.content == b""
+    assert client.get(f"/api/ingestions/{ingestion_id}").status_code == 404
+    assert client.get(f"/api/datasets/{dataset}").json()["measurement_count"] == 0
+    assert client.get(f"/api/datasets/{dataset}/stats").json() == []
+    assert client.delete(f"/api/ingestions/{uuid4()}").status_code == 404

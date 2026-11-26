@@ -104,6 +104,19 @@ def list_ingestions(session: Session, dataset_id: UUID) -> list[Ingestion]:
     )
 
 
+def delete_ingestion(session: Session, ingestion_id: UUID) -> None:
+    """Delete a finished upload and its measurements, retaining the dataset."""
+    ingestion = session.scalar(
+        select(Ingestion).where(Ingestion.id == ingestion_id).with_for_update()
+    )
+    if ingestion is None:
+        raise IngestionNotFound()
+    if ingestion.status not in {"succeeded", "failed"}:
+        raise IngestionConflict()
+    session.delete(ingestion)
+    session.commit()
+
+
 def retry_ingestion(session: Session, ingestion_id: UUID) -> Ingestion:
     ingestion = session.scalar(
         select(Ingestion).where(Ingestion.id == ingestion_id).with_for_update()
