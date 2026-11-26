@@ -1,0 +1,35 @@
+S2 — ajout du flux Kafka, observé sur le serveur le 26/11/2026 (UTC)
+Environnement : pile Compose S3 locale, API accessible par Nginx sur 127.0.0.1:8080.
+Aucun secret ni DSN n'est reproduit ci-dessous.
+
+Contrôles statiques et tests :
+  ruff check api/app api/tests -> All checks passed!
+  pytest -q sur campus_test -> 21 passed, 1 warning
+  node --check web/app.js -> sortie vide, code 0
+
+Broker :
+  kafka-topics.sh --describe --topic campus.measurements
+  PartitionCount: 3 ; ReplicationFactor: 1
+
+Producteur :
+  docker compose -f compose.yaml --profile demo run --rm simulator
+  message 1 -> A101: valid
+  message 5 -> A102: invalid
+  message 30 -> A102: duplicate
+  all messages confirmed by Kafka
+
+Relecture par /api/datasets et /api/datasets/{id}/ingestions :
+  jeu : Flux capteurs (Kafka), measurement_count: 24
+  dépôt : kafka:campus.measurements, status: succeeded
+  rows_accepted: 24, rows_rejected: 3, rows_duplicate: 3
+  raisons : Invalid co2_ppm ; Invalid message ; Invalid humidity_pct
+  numéros observés : 6, 14, 27 (ordre entre partitions non garanti)
+
+Relecture par /api/datasets/{id}/stats :
+  A101: 8 mesures ; A102: 8 mesures ; B201: 8 mesures
+
+Après redémarrage du consommateur : 24 mesures, mêmes compteurs 24 / 3 / 3.
+DELETE /api/ingestions/{id} sur le dépôt kafka:... -> HTTP 409 ; compteurs conservés.
+
+Le HTML et le JavaScript mis à jour ont été servis par Nginx. La navigation visuelle
+dans le navigateur pour ce nouveau jeu Kafka n'a pas encore été consignée.

@@ -111,6 +111,8 @@ def delete_ingestion(session: Session, ingestion_id: UUID) -> None:
     )
     if ingestion is None:
         raise IngestionNotFound()
+    if ingestion.filename.startswith("kafka:"):
+        raise IngestionConflict()
     if ingestion.status not in {"succeeded", "failed"}:
         raise IngestionConflict()
     session.delete(ingestion)

@@ -89,6 +89,12 @@ La maquette PDF a été comparée au rendu. Les vues Dépôts, Rapport, Indicate
 
 Écart restant : les erreurs de ligne exposées par l’API comprennent `line` et `reason`, pas `room`, `field` ni `value`. Le tableau d’erreurs de la maquette est donc simplifié.
 
+## Flux Kafka S2 ajouté — 26/11/2026
+
+Le topic `campus.measurements` a été observé avec trois partitions dans la pile Compose locale. Le simulateur a confirmé l'envoi de 30 messages. Par l'API servie par Nginx, le jeu « Flux capteurs (Kafka) » contient 24 mesures et son dépôt permanent affiche 24 acceptées, 3 rejetées et 3 doublons. Les trois raisons attendues (`Invalid co2_ppm`, `Invalid message`, `Invalid humidity_pct`) et les indicateurs A101, A102, B201 à 8 mesures chacun ont été relus. Le numéro de chaque rejet dépend de l'ordre de réception entre partitions. Voir `proofs/s2-kafka.txt` et `api/tests/test_stream.py` ; `21 passed` sur `campus_test`.
+
+Le HTML et le JavaScript actualisés sont servis par Nginx. Le parcours visuel du nouveau jeu Kafka dans le navigateur reste à contrôler ; les captures S2 précédentes concernent les CSV. La persistance déjà validée en S3 concernait le jeu CSV témoin, pas un redémarrage du flux Kafka.
+
 ## Contrôles Compose S3 — 26/11/2026
 
 Quatre services actifs : DB et API healthy, worker et web Up. Les processus API et worker exécutent avec UID 10001. `/health/live`, `/health/ready`, `/api/version`, `/api/datasets`, `/app.js` et `/styles.css` ont répondu 200 via Nginx. Un dépôt CSV du témoin a produit 63 mesures ; après `down` sans `-v` puis recréation, les mêmes UUID et 63 mesures ont été relus. Pendant `stop db`, live est resté 200, ready et la liste ont répondu 503 ; après `start db`, ready a retrouvé 200 et le témoin 63 mesures. Voir `proofs/s3-stack.txt`, `proofs/s3-worker.txt`, `proofs/s3-persistance.txt` et `proofs/s3-panne-db.txt`.
