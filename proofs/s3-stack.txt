@@ -1,0 +1,15 @@
+S3 — pile complète Compose et contrôle des images
+Date : 26/11/2026 UTC ; commit API servi : 4b24b679171017a4b4d32ed6122a5e67c12abcff.
+Pile : campusdata, services db, api, worker, web.
+
+Observé après build et démarrage :
+- db : postgres:17-alpine, healthy, port 5432 interne.
+- api : campus-api:local, healthy, port 8000 interne.
+- worker : campus-api:local, Up, traitement en boucle.
+- web : campus-web:local, Up, port 127.0.0.1:8080 publié.
+- `docker compose exec api id` et `exec worker id` : uid=10001(appuser), gid=10001(appuser).
+- GET /health/live : 200 ; /health/ready : 200 ; /api/version : 200 et SHA ci-dessus ; /api/datasets : 200.
+- HEAD /app.js et /styles.css : 200.
+
+Le jeu témoin et la persistance sont détaillés séparément dans s3-worker.txt
+et s3-persistance.txt. Aucun secret ou DSN complet n'est inclus ici.

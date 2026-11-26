@@ -2,7 +2,7 @@
 # À PRÉPARER / ADAPTER : Recharger .env avec DATABASE_URL vers db ; fournir le module init_db réalisé en S2.
 # CONTRÔLE ATTENDU : Initialiser SQL avant d’attendre API prête, puis tester dépôt, traitement par le worker et persistance.
 #
-# Pile S3 : quatre services (db, api, worker, web), distincte de campusdata-dev.
+# Pile S3 : db, api, worker, kafka, stream et web, distincte de campusdata-dev.
 # Lancer les commandes depuis la racine du dépôt étudiant.
 name: campusdata
 services:
@@ -70,6 +70,52 @@ services:
       db:
         condition: service_healthy
     restart: unless-stopped
+  kafka:
+    image: apache/kafka:3.9.1
+    environment:
+      KAFKA_NODE_ID: "1"
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+      KAFKA_NUM_PARTITIONS: "3"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    volumes:
+      - kafkadata:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD", "/opt/kafka/bin/kafka-broker-api-versions.sh", "--bootstrap-server", "kafka:9092"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    restart: unless-stopped
+  stream:
+    image: campus-api:local
+    command: ["python", "-m", "app.stream"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?required}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
+  simulator:
+    image: campus-api:local
+    profiles: ["demo"]
+    command: ["python", "-m", "app.simulator", "--count", "30", "--interval", "1"]
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      kafka:
+        condition: service_healthy
   web:
     image: campus-web:local
     build: ./web
@@ -84,3 +130,4 @@ services:
 # Ne pas utiliser down -v pendant la preuve de persistance : cela supprime pgdata.
 volumes:
   pgdata:
+  kafkadata:

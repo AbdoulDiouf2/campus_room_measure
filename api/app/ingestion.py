@@ -111,6 +111,11 @@ def parse_measurement(
     )
 
 
+def check_line(row: list[str], now: datetime) -> ParsedMeasurement:
+    """Apply the CSV measurement rules to one Kafka message too."""
+    return parse_measurement(row, now=now)
+
+
 @dataclass(frozen=True)
 class RejectedRow:
     line: int

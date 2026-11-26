@@ -136,12 +136,16 @@ async function selectDataset(id, navigate = true) {
     await refreshSelectedSummary();
     if (selectedId !== id) return;
     await Promise.all([loadIngestions(), loadStats()]);
+    if (navigate && selectedId === id) {
+      $("detail").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   } catch (error) {
     message(error.message, true);
   }
 }
 
 function renderReport(data) {
+  const isStream = data.filename.startsWith("kafka:");
   reportId = data.id;
   reportFilename = data.filename;
   $("report").hidden = false;
@@ -161,7 +165,7 @@ function renderReport(data) {
   const metrics = document.createElement("div");
   metrics.className = "report-metrics";
   for (const [value, label] of [
-    [data.rows_accepted + data.rows_rejected + data.rows_duplicate, "Lignes lues"],
+    [data.rows_accepted + data.rows_rejected + data.rows_duplicate, isStream ? "Messages reçus" : "Lignes lues"],
     [data.rows_accepted, "Acceptées"],
     [data.rows_rejected, "Rejetées"],
     [data.rows_duplicate, "Doublons"],
@@ -192,13 +196,13 @@ function renderReport(data) {
   }
   if (data.errors.length) {
     const heading = document.createElement("h3");
-    heading.textContent = data.status === "failed" ? "Erreur du dépôt" : "Lignes non retenues";
+    heading.textContent = data.status === "failed" ? "Erreur du dépôt" : isStream ? "Messages non retenus" : "Lignes non retenues";
     box.append(heading);
     const table = document.createElement("table");
     table.className = "error-table";
     const thead = document.createElement("thead");
     const headRow = document.createElement("tr");
-    for (const label of ["Ligne", "Raison"]) {
+    for (const label of [isStream ? "Message" : "Ligne", "Raison"]) {
       const th = document.createElement("th");
       th.scope = "col";
       th.textContent = label;
@@ -219,7 +223,7 @@ function renderReport(data) {
     box.append(table);
   }
   $("retry-button").hidden = data.status !== "failed";
-  $("delete-ingestion").hidden = data.status !== "succeeded" && data.status !== "failed";
+  $("delete-ingestion").hidden = isStream || (data.status !== "succeeded" && data.status !== "failed");
 }
 
 async function loadIngestions() {
@@ -555,6 +559,15 @@ $("stats-form").addEventListener("submit", (event) => {
 });
 $("refresh-datasets").addEventListener("click", loadDatasets);
 $("refresh-recent").addEventListener("click", loadRecent);
+$("refresh-selected").addEventListener("click", async () => {
+  if (!selectedId) return;
+  try {
+    await Promise.all([refreshSelectedSummary(), loadIngestions(), loadStats(), loadDatasets(), loadRecent()]);
+    message("Mesures et rapports actualisés.");
+  } catch (error) {
+    message(error.message, true);
+  }
+});
 $("stats-dataset-select").addEventListener("change", async (event) => {
   const id = event.currentTarget.value;
   if (!id) {
@@ -585,6 +598,6 @@ for (const button of document.querySelectorAll(".nav-button")) {
   button.addEventListener("click", () => showView(button.dataset.view));
 }
 
-request("/api/version").then((data) => { $("version").textContent = `Version ${data.version}`; }).catch(() => { $("version").textContent = "Version indisponible"; });
+request("/api/version").then((data) => { const label = $("version"); label.textContent = `Version ${data.version.slice(0, 8)}`; label.title = `Version complète : ${data.version}`; label.setAttribute("aria-label", `Version complète : ${data.version}`); }).catch(() => { $("version").textContent = "Version indisponible"; });
 loadDatasets();
 loadRecent();

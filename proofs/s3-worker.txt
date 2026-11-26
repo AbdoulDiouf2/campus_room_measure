@@ -1,0 +1,15 @@
+S3 — jeu témoin et traitement par le worker Compose
+Date : 26/11/2026 UTC
+Contexte : pile compose.yaml sur maadec-infra-01, API accessible via Nginx local :8080.
+Version API observée : 4b24b679171017a4b4d32ed6122a5e67c12abcff.
+
+Jeu témoin observé : S3-temoin-2026-11-27
+UUID du jeu : bedb6cda-1110-4d52-ad5c-876a99f244a9
+Dépôt observé : mesures-salles-2026-10-05.csv
+UUID du dépôt : 0fff717c-39da-48f2-b062-99285da34c9e
+Statut final : succeeded
+Acceptées : 63 ; rejetées : 0 ; doublons : 0.
+GET /api/datasets/{id} : measurement_count = 63.
+
+Ce qu'il faut observer : le dépôt a été traité et les 63 mesures sont visibles dans le jeu.
+Cette preuve ne valide pas encore la persistance après recréation des conteneurs : relever à nouveau les mêmes UUID et le compteur après docker compose down (sans -v) puis up.

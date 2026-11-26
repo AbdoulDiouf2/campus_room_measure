@@ -1,0 +1,24 @@
+S3 — persistance après recréation de la pile Compose
+Date : 26/11/2026 UTC
+Pile : campusdata (compose.yaml), volume observé : campusdata_pgdata.
+Version API : 4b24b679171017a4b4d32ed6122a5e67c12abcff.
+
+Avant `docker compose -f compose.yaml down` :
+- Jeu S3-temoin-2026-11-27, id bedb6cda-1110-4d52-ad5c-876a99f244a9.
+- Dépôt id 0fff717c-39da-48f2-b062-99285da34c9e, statut succeeded.
+- 63 mesures, 63 acceptées, 0 rejetée, 0 doublon (voir s3-worker.txt).
+
+Action observée : `docker compose -f compose.yaml down` sans `-v`, puis
+`up -d --wait db`, `run --rm --no-deps api python -m app.init_db`,
+`up -d api worker web`. DB et API healthy, web et worker Up.
+
+Après recréation, vérification HTTP directe avec les UUID ci-dessus :
+- GET /api/datasets/bedb6cda-1110-4d52-ad5c-876a99f244a9 : 200,
+  même id et même nom, measurement_count = 63.
+- GET /api/ingestions/0fff717c-39da-48f2-b062-99285da34c9e : 200,
+  même id, status = succeeded, accepted = 63, rejected = 0, duplicates = 0.
+
+Conclusion : les données du témoin sont conservées après recréation des
+conteneurs avec le volume nommé. Les `curl` de la première transcription
+n'affichaient rien car S3_DATASET_ID était vide dans le terminal ; la comparaison
+ci-dessus utilise explicitement l'UUID relevé avant l'action.

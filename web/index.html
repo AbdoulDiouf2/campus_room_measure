@@ -42,7 +42,7 @@
         </section>
       </div>
       <section id="detail" class="card" aria-labelledby="detail-title" hidden>
-        <div class="section-heading"><div><p class="eyebrow">Jeu sélectionné</p><h2 id="detail-title"></h2><p id="detail-meta"></p></div><button type="button" id="delete-dataset" class="danger">Supprimer le jeu</button></div>
+        <div class="section-heading"><div><p class="eyebrow">Jeu sélectionné</p><h2 id="detail-title"></h2><p id="detail-meta"></p></div><div class="report-actions"><button type="button" id="refresh-selected" class="secondary">Actualiser</button><button type="button" id="delete-dataset" class="danger">Supprimer le jeu</button></div></div>
         <div class="split-content">
           <section aria-labelledby="upload-title">
             <h3 id="upload-title">Nouveau dépôt</h3>
@@ -63,7 +63,7 @@
       </section>
     </div>
     <div id="view-deposits" class="view">
-      <header class="view-heading"><p class="eyebrow">Traitement des fichiers</p><h1>Dépôts de mesures</h1><p>Déposez le CSV des capteurs tel qu’il est exporté. Le worker le contrôle en arrière-plan ; le rapport distingue les lignes acceptées, rejetées et en doublon.</p></header>
+      <header class="view-heading"><p class="eyebrow">Traitement des mesures</p><h1>Dépôts de mesures</h1><p>Déposez un CSV ou consultez le flux Kafka des capteurs. Les rapports distinguent les mesures acceptées, rejetées et en doublon.</p></header>
       <div class="overview-grid direct-grid">
         <section class="card" aria-labelledby="direct-title">
           <h2 id="direct-title">Nouveau dépôt</h2>
@@ -85,7 +85,7 @@
       </div>
     </div>
     <div id="view-report" class="view" hidden>
-      <header class="view-heading"><p class="eyebrow">Suivi du traitement</p><h1>Rapport d'ingestion</h1><p>Retrouvez les lignes acceptées, rejetées et en doublon.</p></header>
+      <header class="view-heading"><p class="eyebrow">Suivi du traitement</p><h1>Rapport d'ingestion</h1><p>Retrouvez les lignes CSV ou les messages Kafka acceptés, rejetés et en doublon.</p></header>
       <section id="report" class="card" aria-labelledby="report-title" hidden>
         <div class="section-heading"><h2 id="report-title">Résultat du dépôt</h2><div class="report-actions"><button type="button" id="report-to-stats">Voir les indicateurs</button><button type="button" id="report-to-deposits" class="secondary">Retour aux dépôts</button></div></div>
         <div id="report-content"></div>

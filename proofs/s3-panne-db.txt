@@ -1,0 +1,18 @@
+S3 — panne contrôlée de PostgreSQL et reprise
+Date : 26/11/2026 UTC ; pile campusdata, version API 4b24b679171017a4b4d32ed6122a5e67c12abcff.
+
+Action : docker compose -f compose.yaml stop db.
+Observations via Nginx local :
+- GET /health/live : 200, {"status":"ok"}.
+- GET /health/ready : 503, {"detail":"Database unavailable"}.
+- GET /api/datasets : 503, {"detail":"Database unavailable"}.
+
+Action : docker compose -f compose.yaml start db.
+Observations : DB brièvement `health: starting`, puis healthy ;
+GET /health/ready : 200, {"status":"ready"}.
+GET du témoin bedb6cda-1110-4d52-ad5c-876a99f244a9 : 200,
+measurement_count = 63 après la reprise.
+
+Conclusion : le processus API est resté vivant pendant l'arrêt DB ; sa readiness
+et les routes métier ont indiqué l'indisponibilité, puis la disponibilité et le
+jeu témoin sont revenus. Durée exacte de la panne non chronométrée.
