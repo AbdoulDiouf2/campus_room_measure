@@ -23,3 +23,4 @@ rendered*.yaml
 cloud.env
 proofs/private/
 .aivancity-venv/
+documents/Enonce/

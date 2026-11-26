@@ -2,34 +2,52 @@
 # À PRÉPARER / ADAPTER : Charger DATABASE_URL avant le lancement. Compléter les TODO selon le contrat.
 # CONTRÔLE ATTENDU : Contrôler live/ready/version, puis les routes métier après votre réalisation.
 #
-"""Point d'entrée du socle CampusData, à compléter pendant la séance 2.
+"""Point d'entrée de l'API CampusData."""
 
-Le starter expose uniquement la santé du processus, l'accès DB et la version.
-Il ne contient ni tables (datasets, ingestions, measurements), ni routes
-métier, ni lecture CSV, ni worker d'ingestion.
-En S2, déplacer la connexion vers database.py et inclure le routeur métier.
-Garder une seule source de configuration pour les probes et les services.
-"""
-import os
+import logging
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
-from sqlalchemy import create_engine, text
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
+from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
-# Cette version décrit le contrat OpenAPI ; /api/version identifie la release.
-app = FastAPI(title="CampusData", version="0.1.0")
-# La variable doit exister AVANT l'import du module, y compris sous pytest.
-# Son hôte dépend du contexte : poste = 127.0.0.1 ; Compose/Kubernetes = db.
-# L'engine gère le pool de connexions. Ce n'est pas une Session de transaction.
-engine = create_engine(
-    os.environ["DATABASE_URL"],
-    # Vérifier les connexions sorties du pool aide après une coupure DB.
-    # Cela ne rejoue pas automatiquement une transaction interrompue.
-    pool_pre_ping=True,
-    # Borner l'établissement de connexion ; ce n'est pas un délai global SQL.
-    connect_args={"connect_timeout": 3},
+from .database import engine
+from .routes import router
+from .services import (
+    DatasetNameConflict,
+    DatasetNotFound,
+    IngestionConflict,
+    IngestionNotFound,
 )
+
+logger = logging.getLogger(__name__)
+app = FastAPI(title="CampusData", version="0.1.0")
+app.include_router(router)
+
+
+@app.exception_handler(DatasetNotFound)
+@app.exception_handler(IngestionNotFound)
+def not_found(_request: Request, _exc: Exception) -> JSONResponse:
+    return JSONResponse(status_code=404, content={"detail": "Not found"})
+
+
+@app.exception_handler(DatasetNameConflict)
+@app.exception_handler(IngestionConflict)
+def conflict(_request: Request, _exc: Exception) -> JSONResponse:
+    return JSONResponse(status_code=409, content={"detail": "Conflict"})
+
+
+@app.exception_handler(SQLAlchemyError)
+def database_error(_request: Request, exc: SQLAlchemyError) -> JSONResponse:
+    logger.error("Database request failed: %s", type(exc).__name__)
+    return JSONResponse(status_code=503, content={"detail": "Database unavailable"})
+
+
+@app.exception_handler(Exception)
+def unexpected_error(_request: Request, exc: Exception) -> JSONResponse:
+    logger.exception("Unexpected request error: %s", type(exc).__name__)
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
 
 @app.get("/health/live")
@@ -42,14 +60,12 @@ def live():
 
 @app.get("/health/ready")
 def ready():
-    """Vérifier la connexion DB ; ajouter le contrôle de table en séance 2."""
+    """Vérifier la connexion DB et la présence des trois tables métier."""
     try:
         # Le contexte libère la connexion même lorsqu'une exception remonte.
         with engine.connect() as connection:
-            # SELECT 1 prouve une connexion, pas l'existence du schéma métier.
-            # TODO S2 : lire aussi datasets, ingestions et measurements
-            # (SELECT 1 FROM <table> LIMIT 1). Une table vide reste valide.
-            connection.execute(text("SELECT 1"))
+            for table in ("datasets", "ingestions", "measurements"):
+                connection.execute(text(f"SELECT 1 FROM {table} LIMIT 1"))
     except SQLAlchemyError:
         # Réponse publique générique : ne jamais renvoyer le DSN ou le secret.
         # Cette interception est limitée à la probe. Dans les routes métier, distinguer
@@ -67,10 +83,3 @@ def version():
     # La version permet une vérification croisée avec le commit et le digest.
     # Ce champ seul ne prouve pas que toute la recette a été exécutée.
     return {"version": value}
-
-# TODO S2 : models.py, schemas.py, database.py, services.py, routes.py.
-# TODO S2 : ingestion.py (lecture et contrôle du CSV) et worker.py (traitement
-#           des dépôts pending, hors du processus API).
-# TODO S2 : une Session par requête ; fermeture et rollback sur échec.
-# TODO S2 : initialisation explicite dans app/init_db.py, hors démarrage API.
-# TODO S2 : inclure les routeurs /api/datasets et /api/ingestions.

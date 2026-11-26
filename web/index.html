@@ -1,45 +1,68 @@
 <!doctype html>
 <html lang="fr">
-<!-- CONTEXTE ÉTUDIANT : S2, page servie par Nginx, pas ouverte en file://.
-     À RÉALISER : jeux de données, dépôt de fichier CSV, suivi des dépôts et indicateurs.
-     CONTRÔLE : parcours clavier, états vide/erreur et requêtes vers /api/datasets. -->
 <head>
   <meta charset="utf-8">
-  <!-- Le viewport permet une mise en page adaptée aux petits écrans. -->
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>CampusData</title>
+  <title>CampusData — mesures des salles</title>
   <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
 </head>
 <body>
   <main>
-    <h1>CampusData</h1>
-    <!-- Conserver une zone de message stable : annoncer succès, attente et
-         erreurs sans obliger l'utilisateur à chercher le résultat ailleurs.
-         role=status convient aux notifications ; prévoir role=alert pour
-         une erreur nécessitant une annonce immédiate. -->
-    <p id="message" role="status">Interface à réaliser en séance 2.</p>
+    <header class="page-header">
+      <div><p class="eyebrow">Qualité de l'air du campus</p><h1>CampusData</h1><p>Importez les relevés des capteurs et consultez les mesures par salle.</p></div>
+      <span id="version" class="version">Version …</span>
+    </header>
+    <p id="message" role="status" aria-live="polite"></p>
 
-    <!-- TODO S2 : formulaire « Nouveau jeu de données ».
-         Chaque champ possède un label relié par for/id.
-         name est obligatoire ; description et owner suivent le contrat commun.
-         Le bouton d'envoi est type=submit ; les actions annexes sont type=button. -->
+    <section class="card" aria-labelledby="create-title">
+      <h2 id="create-title">Nouveau jeu de données</h2>
+      <form id="create-form">
+        <div class="fields">
+          <label>Nom <span aria-hidden="true">*</span><input id="dataset-name" name="name" required maxlength="120"></label>
+          <label>Responsable <input id="dataset-owner" name="owner"></label>
+        </div>
+        <label>Description <textarea id="dataset-description" name="description" rows="2"></textarea></label>
+        <button type="submit">Créer le jeu</button>
+      </form>
+    </section>
 
-    <!-- TODO S2 : liste des jeux de données (nom, responsable, nombre de mesures).
-         Représenter explicitement l'état vide et l'état de chargement.
-         Sélectionner un jeu affiche ses dépôts et ses indicateurs. -->
-    <ul id="datasets"></ul>
+    <section class="card" aria-labelledby="datasets-title">
+      <div class="section-heading"><h2 id="datasets-title">Jeux de données</h2><button type="button" id="refresh-datasets" class="secondary">Actualiser</button></div>
+      <p id="datasets-state">Chargement…</p>
+      <ul id="datasets" class="dataset-list"></ul>
+    </section>
 
-    <!-- TODO S2 : dépôt d'un fichier CSV pour le jeu sélectionné.
-         <input type="file" accept=".csv,text/csv"> avec un label explicite.
-         Afficher le statut du dépôt (pending, running, succeeded, failed)
-         et les compteurs acceptées / rejetées / doublons une fois traité. -->
-
-    <!-- TODO S2 : tableau des indicateurs par salle, filtres salle et période.
-         Utiliser <table> avec <caption> et <th scope="col"> ; un tableau vide
-         doit dire qu'aucune mesure ne correspond au filtre.
-         Ajouter la version servie (GET /api/version) pour la recette. -->
+    <section id="detail" class="card" aria-labelledby="detail-title" hidden>
+      <div class="section-heading"><div><p class="eyebrow">Jeu sélectionné</p><h2 id="detail-title"></h2><p id="detail-meta"></p></div><button type="button" id="delete-dataset" class="danger">Supprimer le jeu</button></div>
+      <h3>Déposer un fichier CSV</h3>
+      <p>En-tête attendu : <code>room,measured_at,co2_ppm,temperature_c,humidity_pct</code></p>
+      <form id="upload-form">
+        <label>Fichier CSV <input id="csv-file" type="file" accept=".csv,text/csv" required></label>
+        <button id="upload-button" type="submit">Déposer le fichier</button>
+      </form>
+      <h3>Dépôts</h3>
+      <p id="ingestions-state"></p>
+      <ul id="ingestions" class="ingestion-list"></ul>
+      <section id="report" aria-labelledby="report-title" hidden>
+        <h3 id="report-title">Rapport du dépôt</h3>
+        <div id="report-content"></div>
+        <button type="button" id="retry-button" hidden>Relancer ce dépôt</button>
+      </section>
+      <h3>Indicateurs par salle</h3>
+      <form id="stats-form" class="fields filters">
+        <label>Salle <input id="filter-room" name="room"></label>
+        <label>Du <input id="filter-from" name="from" type="datetime-local"></label>
+        <label>Au <input id="filter-to" name="to" type="datetime-local"></label>
+        <button type="submit">Filtrer</button>
+      </form>
+      <p id="stats-state"></p>
+      <div class="table-scroll"><table id="stats-table" hidden>
+        <caption>Mesures acceptées par salle</caption>
+        <thead><tr><th scope="col">Salle</th><th scope="col">Mesures</th><th scope="col">CO₂ moy.</th><th scope="col">CO₂ min.</th><th scope="col">CO₂ max.</th><th scope="col">Temp. moy.</th><th scope="col">Humidité moy.</th><th scope="col">Dernière mesure</th></tr></thead>
+        <tbody id="stats-body"></tbody>
+      </table></div>
+    </section>
   </main>
-  <!-- defer diffère l'exécution jusqu'à l'analyse du document HTML. -->
-  <script src="app.js" defer></script>
 </body>
 </html>

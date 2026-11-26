@@ -1,0 +1,38 @@
+S2 — Contrôles API, ingestion et worker
+Date : 26/11/2026
+Contexte : serveur personnel, Python 3.12, base PostgreSQL dédiée campus_test.
+Version : modifications S2 locales non encore commitées ; HEAD initial bb04020.
+Aucun mot de passe ni DSN complet n'est consigné ici.
+
+Commandes et observations :
+- python -m ruff check api → All checks passed!
+- python -m pytest -q → 14 passed, 1 warning.
+  Avertissement non bloquant : StarletteDeprecationWarning dans fastapi.testclient.
+- node --check web/app.js → succès, aucune erreur de syntaxe affichée.
+- GET http://127.0.0.1:8080/ → HTTP 200.
+- GET http://127.0.0.1:8080/api/datasets → HTTP 200.
+- python -m app.worker --once sur campus_test vide → sortie 0.
+
+Ce que les tests d'intégration vérifient sur campus_test :
+- Création, liste et détail d'un jeu ; refus 409 d'un nom déjà utilisé ; refus 404 d'un identifiant inconnu ; corps invalide 422.
+- Dépôt CSV accepté en 202 et enregistré pending, puis traitement par le worker.
+- CSV valide : 63 acceptées, 0 rejet, 0 doublon.
+- Second dépôt du même CSV : 0 acceptée, 63 doublons ; total du jeu toujours 63.
+- CSV mixte : 4 acceptées, 7 rejetées, 1 doublon ; numéros des rejets vérifiés.
+- En-tête invalide : failed, 0 acceptée, raison visible ; relance failed → pending ; relance succeeded → 409.
+- Fichier trop grand → 413 ; type incorrect → 415 ; jeu inconnu → 404.
+- Statistiques : somme des mesures par salle 63, filtre salle vide, période inversée → 422.
+- worker --once traite deux dépôts en attente dans un passage.
+- Suppression du jeu → 204 sans corps ; dépôts et mesures liés absents ensuite.
+
+Limites : TestClient appelle l'API dans le processus de test. La persistance après redémarrage relève de la recette S3. Le comportement après arrêt brutal du worker pendant un dépôt running reste à définir.
+
+Contrôle navigateur : après un premier échec dû à des bibliothèques système absentes, Chromium a été lancé avec des bibliothèques extraites temporairement dans /tmp, sans installation système.
+- Page chargée via Nginx, version dev visible et état vide affiché.
+- Création d'un jeu, dépôt CSV puis worker --once : rapport Terminé/63 acceptées ; trois salles affichées ; compteur du jeu sélectionné corrigé et revérifié à 63.
+- Affichage mobile à 390 px : aucun débordement horizontal du document (le tableau est défilable).
+- Nom contenant `<b>` affiché comme texte, sans élément HTML injecté.
+- CSV mixte : 4 acceptées, 7 rejets visibles, 1 doublon ; en-tête invalide : Échec et raison affichée ; bouton Relancer visible et relance observée.
+- Parcours clavier : Tab après le champ nom place le focus sur responsable. Annuler la confirmation conserve le jeu. Erreur réseau simulée : message role=alert et liste conservée.
+- Suppression confirmée puis liste vide ; aucune erreur JavaScript observée.
+Captures : proofs/s2-interface-desktop.png (dépôt en attente), proofs/s2-interface-traitee.png (rapport et indicateurs), proofs/s2-interface-mobile.png (mobile), proofs/s2-interface-erreur.png (échec et relance). Les captures ont été reprises avec les étiquettes de statut françaises finales ; le rapport Échec a été revérifié et la liste des jeux était vide après nettoyage.

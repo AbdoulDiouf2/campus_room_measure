@@ -1,0 +1,14 @@
+[Unit]
+Description=CampusData development API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/maadec/infra/aivancity-dev
+ExecStart=/home/maadec/infra/aivancity-dev/scripts/run-api-dev.sh
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

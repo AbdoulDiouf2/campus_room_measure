@@ -1,63 +1,46 @@
-# Journal d’équipe
+# Journal de projet — CampusData
 
-**Membres :** à renseigner. **Dépôt étudiant :** à renseigner.
-Le journal retrace des décisions et résultats, pas une liste de commandes copiées.
-Le remplir au fil du travail en quelques lignes par étape, sans y placer de **secret**.
+**Étudiant :** Abdoul Ahad Mbacké DIOUF. **Dépôt :** CampusData (`aivancity-dev`).
 
-## 1. Travail et alternance des rôles
+Je note ici le travail réalisé, les problèmes rencontrés et les résultats que j'ai effectivement observés. Je ne consigne aucun secret.
 
-| Séance/étape | Pilote | Observateur | Travail réellement réalisé | Commit/preuve | Difficulté | Prochaine action |
-|---|---|---|---|---|---|---|
-| À renseigner | Membre | Membre | Résultat concret | Référence | Symptôme | Action ciblée |
+## 1. Travail réalisé
 
-Faire apparaître les changements de rôles et les revues. Chaque membre doit
-pouvoir expliquer une décision de développement et une décision d’exploitation.
+| Séance/étape | Mon travail et mes observations | Référence | Difficulté | Prochaine action |
+|---|---|---|---|---|
+| S1 — 26/11/2026 | J'ai pris connaissance de l'énoncé et relu le dossier de conception rédigé avec l'aide de l'IA. J'ai activé le venv : Python 3.12.3. J'ai démarré PostgreSQL, affiché `healthy`, puis l'API. `/health/live` et `/api/version` ont répondu `200`. Après correction du mot de passe PostgreSQL, `/health/ready` est passé de `503` à `200`. J'ai ensuite obtenu `2 passed, 1 warning` avec pytest, puis `{"version":"dev"}` via le proxy web sur le port 8080. | `documents/architecture.md` ; `proofs/s1-preparation.txt`, déjà renseigné avec ces observations. | La DB acceptait une connexion interne, mais refusait l'API depuis le poste. | Commencer S2 et revérifier l’adresse de la passerelle si le réseau Docker change. |
+| S2 — 26/11/2026 | Les modèles, schémas, services, routes, worker, interface et tests S2 ont été réalisés. J'ai relu le code produit. Les contrôles exécutés donnent 14 tests réussis, Ruff sans erreur, syntaxe JS valide et réponse HTTP 200 via Nginx pour la page et la liste des jeux. Deux services systemd utilisateur maintiennent désormais l'API et le worker après la fermeture de l'IDE ; le parcours de dépôt a réussi avec ces services. J'ai ouvert l'interface via Tailscale et confirmé que son style, sa version et la liste des jeux s'affichent. | `proofs/s2-api-tests.txt` ; `systemd/` ; `scripts/`. | Le statut `running` après arrêt brutal du worker reste un cas limite. | Confirmer les éventuelles bornes CSV supplémentaires du contrat, puis préparer S3. |
+
+Je travaille seul sur ce dépôt ; il n'y a pas d'alternance de rôles à déclarer.
 
 ## 2. Raisonnement lors d’un blocage
 
-- Contexte et **résultat attendu** : à renseigner.
-- Observation exacte, sans **secret** : à renseigner.
-- Hypothèse et vérification choisie : à renseigner.
-- Résultat de la vérification : à renseigner.
-- Correction et contrôle de reprise : à renseigner.
-- Leçon utile pour le **runbook** : à renseigner.
+- **Contexte et attendu :** je lance l'API sur mon serveur et j'attends `200` sur `/health/ready` pour vérifier sa connexion à la base PostgreSQL du Compose de développement.
+- **Observation :** la DB était `healthy`, `/health/live` et `/api/version` répondaient `200`, mais `/health/ready` répondait `503` avec `Database unavailable`.
+- **Diagnostic :** le mot de passe du rôle PostgreSQL ne correspondait pas au `.env` actuel. Un essai `psql` depuis le conteneur avait réussi ; l'essai avec un mot de passe volontairement faux a montré que ce test interne ne contrôlait pas l'authentification. Le test de connexion depuis le poste a révélé l'échec d'authentification.
+- **Correction et résultat :** j'ai aligné le mot de passe du rôle avec `ALTER ROLE`, sans supprimer le volume. J'ai ensuite obtenu `200` et `{"status":"ready"}`.
+- **Ce que j'ai appris :** `healthy` ne garantit pas que l'API possède les bons identifiants. Modifier `.env` ne modifie pas le mot de passe d'une base déjà initialisée. Le test doit utiliser le même chemin de connexion que l'API.
+- **Second blocage, puis correction :** la requête via Nginx attendait trop longtemps. J'ai vérifié que le conteneur web utilisait le réseau `172.26.0.0/16`, que son nom d'hôte pointait vers la mauvaise passerelle et qu'UFW bloquait le port 8000. J'ai relancé Uvicorn sur `172.26.0.1`, autorisé uniquement ce trafic Docker dans UFW et adapté `extra_hosts` dans `compose.dev.yaml`. Le proxy a alors renvoyé `{"version":"dev"}`.
+- **Contrôle des tests :** `python -m pytest -q` a donné `2 passed, 1 warning`. Ce sont les tests du socle, pas des tests métier.
+- **Limite :** l'adresse `172.26.0.1` dépend du réseau Docker actuel. Je devrai vérifier la configuration si le réseau est recréé.
 
-Une hypothèse infirmée reste utile : noter pourquoi elle a été abandonnée.
+## 3. Ma relecture
 
-## 3. Revues et compréhension individuelle
-
-| Élément relu | Auteur | Relecteur | Question posée | Correction/décision | Preuve de contrôle |
-|---|---|---|---|---|---|
-| À renseigner | Membre | Membre | Point précis | Résultat | Référence |
-
-Vérifier aussi les commentaires : sont-ils cohérents avec le code réalisé ?
-Supprimer les TODO terminés et conserver ceux qui décrivent un travail restant.
+| Élément relu | Ce que j'ai vérifié | Point restant | Référence |
+|---|---|---|---|
+| Dossier d'architecture S1 | J'ai lu la rédaction complète et vérifié qu'elle décrit le besoin, les cas d'usage et l'architecture visée. J'ai revu le classement du CSV : 4 lignes valides, 7 invalides et 1 doublon, conformément au sujet. | Confirmer les éventuelles bornes numériques supplémentaires dans le contrat détaillé. | `documents/architecture.md` §2, §5 et §9 |
+| Code S2 | J'ai relu le code produit avec l'aide de l'IA après les contrôles automatisés et le parcours navigateur. | La reprise automatique d'un dépôt resté `running` après un arrêt brutal n'est pas réalisée ; les éventuelles bornes CSV supplémentaires restent à confirmer. | `api/app/`, `web/` et `proofs/s2-api-tests.txt` |
 
 ## 4. Usage d’outils d’IA
 
-Indiquer l’aide obtenue, les adaptations et les vérifications effectuées.
+| Besoin d'aide | Aide reçue et mon usage | Ma vérification et sa limite |
+|---|---|---|
+| Comprendre l'énoncé et structurer la conception | L'assistant IA m'a aidé à rédiger `documents/architecture.md` ; je l'ai lu. L'assistant a ensuite classé les lignes du CSV avec erreurs, et j'ai revu ce classement. | Le document est une conception, pas une preuve de fonctionnement. Les éventuelles bornes CSV supplémentaires restent à confirmer dans le contrat détaillé. |
+| Diagnostiquer la readiness à `503` | L'assistant m'a proposé des contrôles ; un premier test interne était trompeur et son diagnostic a été corrigé. J'ai exécuté `ALTER ROLE`. | J'ai revérifié `/health/ready` : `200`. Le premier test interne ne prouvait pas que l'API pouvait s'authentifier. |
+| Terminer S2 | J'ai utilisé l'IA pour m'aider à avancer sur le code métier, le worker, l'interface et les tests d'intégration, puis j'ai relu le résultat. | Les tests, contrôles HTTP et parcours navigateur ont réussi. Je dois encore confirmer les éventuelles bornes CSV supplémentaires du contrat détaillé. |
 
-| Besoin d’aide | Proposition reçue | Adaptation faite par l’équipe | Vérification | Limite ou proposition rejetée |
-|---|---|---|---|---|
-| À renseigner | Résumé, sans données privées | Modification comprise | Test/preuve | Explication |
-
-Le binôme reste responsable de ce qu’il remet et doit pouvoir l’expliquer.
-Un bloc généré ne devient pas valide sans lecture du contrat et contrôle réel.
+Je reste responsable du code, des vérifications et du dossier remis.
 
 ## 5. Bilan final
 
-Chaque membre indique une **règle métier** comprise, un incident diagnostiqué,
-une décision d’infrastructure expliquée et un point qu’il approfondirait ensuite.
-
-## Exemple de note utile à compléter
-
-- Étape : accès **PostgreSQL** depuis l’API conteneurisée.
-- Hypothèse à vérifier : le DSN utilise encore l’adresse du poste.
-- Vérification choisie : comparer l’hôte configuré au contexte réseau, sans publier le DSN.
-- **Observation :** à renseigner après lecture des éléments utiles.
-- Correction et contrôle : à renseigner avec votre action et le résultat de **readiness**.
-- Commit ou preuve : à renseigner si une modification a été nécessaire.
-
-Cet exemple décrit une démarche, pas un incident déjà constaté par votre binôme.
-Une difficulté résolue sans changement de code peut être documentée dans le journal
-et le **runbook** sans inventer un **commit** de correction.
+Je compléterai mon bilan après les séances de développement et d'exploitation : une règle métier comprise, un incident diagnostiqué, une décision d'infrastructure expliquée et un point à approfondir. Aucun commit de code n'est attribué à l'incident DB : la correction a été faite dans PostgreSQL.

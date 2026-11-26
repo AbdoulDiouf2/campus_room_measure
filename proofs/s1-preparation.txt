@@ -1,0 +1,99 @@
+1563  sudo apt update
+
+ 1564  sudo apt install python3 python-is-python3 python3-venv python3-pip
+
+ 1565  python --version
+
+ 1566  clear
+
+ 1567  python -m venv .aivancity-venv
+
+ 1569  source .aivancity-venv/bin/activate
+
+ 1570  clear
+
+ 1571  git init
+
+ 1573  git config --global user.email "abdoul.diouf**************"
+
+ 1574  git config --global user.name "Abdoul Ahad Mbacké DIOUF"
+
+ 1577  git remote add origin https://github.com/AbdoulDiouf2/campus_room_measure.git
+
+ 1581  git add .
+
+ 1582  git commit -m "initial commit"
+
+ 1583  git branch -M main
+
+ 1584  git push -u origin main
+
+ 1585  clear
+
+ 1586  mkdir proofs
+
+ 1587  cd proofs/
+
+ 1588  nano sN.sujet.txt
+
+
+
+S1 — Préparation et démarrage du socle
+
+Date : 25/11/2026
+
+Environnement : serveur personnel
+
+
+
+Python : 3.12.3
+
+PostgreSQL : conteneur campusdata-dev-db-1, état healthy
+
+API : Uvicorn démarre sur 127.0.0.1:8000
+
+
+
+GET /health/live : 200, {"status":"ok"}
+
+GET /api/version : 200, {"version":"dev"}
+
+GET /health/ready : d'abord 503, puis 200, {"status":"ready"}
+
+
+
+Incident : le mot de passe du rôle PostgreSQL existant ne correspondait
+
+pas à celui du .env actuel. Le mot de passe du rôle a été aligné avec
+
+ALTER ROLE, sans supprimer le volume. La readiness a ensuite répondu 200.
+
+
+
+Proxy web vers API : échec initial (délai dépassé) lorsque l'API écoutait
+
+sur 127.0.0.1 ; correction et contrôle réussi détaillés ci-dessous.
+
+Complément observé le 26/11/2026 :
+
+- Tests du starter : `python -m pytest -q` → 2 passed, 1 warning.
+
+  L'avertissement concerne `starlette.testclient` et `httpx` ; les tests passent.
+
+- Le premier appel web → API expirait. Depuis le conteneur web, `host.docker.internal`
+
+  pointait vers 172.17.0.1 alors que le réseau du Compose de développement
+
+  utilise la passerelle 172.26.0.1. UFW bloquait aussi l'accès au port 8000
+
+  depuis ce réseau Docker.
+
+- Après écoute d'Uvicorn sur 172.26.0.1, règle UFW limitée à l'interface Docker
+
+  de développement et adaptation de `extra_hosts` dans `compose.dev.yaml`,
+
+  `curl --max-time 5 localhost:8080/api/version` → {"version":"dev"}.
+
+- Limite : l'adresse 172.26.0.1 dépend du réseau Docker actuel ; la
+
+  configuration sera à revérifier si ce réseau est recréé.

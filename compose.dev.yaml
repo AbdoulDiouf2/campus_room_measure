@@ -28,9 +28,11 @@ services:
     # Poste 127.0.0.1:8080 -> Nginx :8080 ; Nginx relaie /api vers Uvicorn :8000 du poste.
     ports:
       - "127.0.0.1:8080:8080"
-    # Relier le nom host.docker.internal à la passerelle du poste sous Linux.
+    # Sur ce serveur, la passerelle de ce réseau Compose est 172.26.0.1.
+    # Relever et adapter cette adresse si Docker recrée le réseau autrement.
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      # - "host.docker.internal:host-gateway"
+      - "host.docker.internal:172.26.0.1"
     volumes:
       # Bind mounts en lecture seule : les modifications locales sont visibles
       # sans reconstruire l’image ; les droits Unix du poste restent à respecter.

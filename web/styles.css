@@ -1,18 +1,13 @@
-/* CONTEXTE ÉTUDIANT : S2, styles de votre interface.
-   À ADAPTER : mise en page et états visuels sans supprimer les libellés/focus.
-   CONTRÔLE : petit écran, clavier et messages lisibles en cas d’erreur. */
-/* Socle de lisibilité ; compléter la mise en page pendant la séance 2.
-   Utiliser des classes pour les états chargement/erreur/vide ; la couleur
-   seule ne doit pas porter une information de statut. Ajouter du texte. */
-:root { font-family: system-ui, sans-serif; color-scheme: light dark; }
-body { margin: 0; line-height: 1.5; }
-/* Une largeur limitée rend les formulaires lisibles sur grand écran.
-   Le padding conserve une marge sur mobile sans largeur fixe débordante. */
-main { max-width: 64rem; margin: 2rem auto; padding: 0 1rem; }
-/* Les contrôles natifs héritent de la police pour une taille cohérente. */
-input, textarea, select, button { font: inherit; }
-button { cursor: pointer; }
-/* Le curseur ne remplace pas l'attribut disabled géré dans le JavaScript. */
-button:disabled { cursor: wait; }
-/* Garder un focus visible et vérifier le contraste en modes clair et sombre. */
-:focus-visible { outline: 3px solid #5684ff; outline-offset: 3px; }
+:root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#16201c;background:#f5f6f3;line-height:1.5}
+*{box-sizing:border-box}body{margin:0}main{max-width:72rem;margin:0 auto;padding:2rem 1rem 4rem}
+h1{font-size:2.4rem;line-height:1.1;margin:.15rem 0}h2{font-size:1.35rem;margin:0 0 1rem}h3{font-size:1.1rem;margin:1.5rem 0 .6rem}h4{margin:.75rem 0 .25rem}
+p{margin:.5rem 0;color:#56625c}.eyebrow{text-transform:uppercase;letter-spacing:.1em;font-size:.72rem;font-weight:700;color:#0e6b58}
+.page-header,.section-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem}.page-header{margin-bottom:1.5rem}.version{white-space:nowrap;font-size:.85rem;color:#56625c}
+.card{background:#fff;border:1px solid #dce0da;border-radius:12px;padding:1.5rem;margin:1rem 0;box-shadow:0 2px 8px #16201c08}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(12rem,1fr));gap:1rem;align-items:end}.filters{margin-bottom:1rem}
+label{display:block;font-weight:600;margin:.7rem 0}input,textarea,button{font:inherit}input,textarea{display:block;width:100%;padding:.65rem .75rem;margin-top:.3rem;border:1px solid #acb7b0;border-radius:6px;background:#fff;color:#16201c}
+input[type=file]{padding:.45rem}button{background:#0e6b58;color:#fff;border:1px solid #0e6b58;border-radius:6px;padding:.6rem .9rem;min-height:44px;cursor:pointer;font-weight:600}button:hover{background:#0a5242}.secondary{background:#fff;color:#0e6b58}.secondary:hover{background:#e3f1ec}.danger{background:#fff;color:#b3261e;border-color:#b3261e}.danger:hover{background:#f8e6e3}button:disabled{opacity:.55;cursor:wait}:focus-visible{outline:3px solid #1d5fb8;outline-offset:2px}
+#message{min-height:1.5rem;font-weight:600;color:#0e6b58}#message.error{color:#b3261e}
+.dataset-list,.ingestion-list{list-style:none;margin:0;padding:0}.dataset-list li,.ingestion-list li{display:flex;align-items:center;gap:1rem;padding:.7rem 0;border-top:1px solid #dce0da}.dataset-list li span{color:#56625c}.dataset-button{background:transparent;color:#0e6b58;border:0;padding:0;text-align:left;min-height:0;text-decoration:underline}.dataset-button:hover{background:transparent;color:#0a5242}
+#report{border-top:1px solid #dce0da;padding-top:.5rem}#report ul{padding-left:1.4rem}code{overflow-wrap:anywhere}.table-scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:.9rem}caption{text-align:left;font-weight:600;margin-bottom:.5rem}th,td{text-align:left;padding:.65rem;border-bottom:1px solid #dce0da}th{background:#e3f1ec;white-space:nowrap}td:not(:first-child){font-variant-numeric:tabular-nums}
+@media(max-width:650px){main{padding:1rem}.page-header,.section-heading{flex-direction:column}.card{padding:1rem}.dataset-list li{align-items:flex-start;flex-direction:column;gap:.25rem}}
